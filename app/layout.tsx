@@ -3,9 +3,9 @@ import './globals.css'
 import ClientLayout from './client-layout'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: 'sosociety',
+  description: 'Social Media Management Platform',
+  generator: 'Next.js',
 }
 
 export default function RootLayout({
