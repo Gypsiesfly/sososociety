@@ -20,20 +20,12 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ['localhost'],
     unoptimized: true,
   },
   experimental: {
-    serverActions: true,
-  },
-  output: 'export',
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:3000/api/:path*',
-      },
-    ]
+    webpackBuildWorker: true,
+    parallelServerBuildTraces: true,
+    parallelServerCompiles: true,
   },
 }
 

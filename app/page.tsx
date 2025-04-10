@@ -6,7 +6,7 @@ import Navbar from "@/components/navbar"
 import ClientLogoSlider from "@/components/client-logo-slider"
 import HandlerPopup from "@/components/handler-popup"
 import PricingCard from "@/components/pricing-card"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 
 function SocialTextCycler() {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -41,36 +41,6 @@ export default function Home() {
     { src: "/images/client-logo-4.png", alt: "WPS Logo" },
     { src: "/images/client-logo-5.png", alt: "Rstream Logo" },
   ]
-
-  const faqsRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.remove('opacity-0', 'translate-y-4');
-            entry.target.classList.add('opacity-100', 'translate-y-0');
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    // Get all FAQ items
-    const faqItems = document.querySelectorAll('#faqs h2, #faqs .flex');
-    
-    // Observe each FAQ item
-    faqItems.forEach(item => {
-      observer.observe(item);
-    });
-
-    return () => {
-      faqItems.forEach(item => {
-        observer.unobserve(item);
-      });
-    };
-  }, []);
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -366,9 +336,9 @@ export default function Home() {
       </section>
 
       {/* FAQs Section */}
-      <section id="faqs" className="bg-green-500 py-16 relative overflow-hidden" ref={faqsRef}>
+      <section id="faqs" className="bg-green-500 py-16 relative overflow-hidden">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-white text-center mb-12 opacity-0 translate-y-4">
+          <h2 className="text-4xl font-bold text-white text-center mb-12">
             Frequently asked
             <br />
             questions
@@ -376,7 +346,7 @@ export default function Home() {
 
           <div className="max-w-2xl mx-auto space-y-6 relative z-10">
             {/* Question 1 */}
-            <div className="flex items-start opacity-0 translate-y-4">
+            <div className="flex items-start">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
                 <Image src="/images/person-icon.svg" alt="User" width={24} height={24} />
               </div>
@@ -385,7 +355,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex items-start justify-end opacity-0 translate-y-4">
+            <div className="flex items-start justify-end">
               <div className="bg-white rounded-2xl p-3 text-left mr-3 max-w-[80%]">
                 <p>No, there are no refunds for our services</p>
               </div>
@@ -395,7 +365,7 @@ export default function Home() {
             </div>
 
             {/* Question 2 */}
-            <div className="flex items-start opacity-0 translate-y-4">
+            <div className="flex items-start">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
                 <Image src="/images/person-icon.svg" alt="User" width={24} height={24} />
               </div>
@@ -404,7 +374,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex items-start justify-end opacity-0 translate-y-4">
+            <div className="flex items-start justify-end">
               <div className="bg-white rounded-2xl p-3 text-left mr-3 max-w-[80%]">
                 <p>Relay it to your handler and he'd follow your instructions</p>
               </div>
@@ -414,7 +384,7 @@ export default function Home() {
             </div>
 
             {/* Question 3 */}
-            <div className="flex items-start opacity-0 translate-y-4">
+            <div className="flex items-start">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
                 <Image src="/images/person-icon.svg" alt="User" width={24} height={24} />
               </div>
@@ -423,7 +393,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex items-start justify-end opacity-0 translate-y-4">
+            <div className="flex items-start justify-end">
               <div className="bg-white rounded-2xl p-3 text-left mr-3 max-w-[80%]">
                 <p>If its part of your package, we will.</p>
               </div>
@@ -433,7 +403,7 @@ export default function Home() {
             </div>
 
             {/* Question 4 */}
-            <div className="flex items-start opacity-0 translate-y-4">
+            <div className="flex items-start">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
                 <Image src="/images/person-icon.svg" alt="User" width={24} height={24} />
               </div>
@@ -442,47 +412,9 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex items-start justify-end opacity-0 translate-y-4">
+            <div className="flex items-start justify-end">
               <div className="bg-white rounded-2xl p-3 text-left mr-3 max-w-[80%]">
                 <p>You can decide to not renew it when it ends</p>
-              </div>
-              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
-                <Image src="/images/profile-avatar.png" alt="Support" width={40} height={40} />
-              </div>
-            </div>
-
-            {/* Question 5 */}
-            <div className="flex items-start opacity-0 translate-y-4">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
-                <Image src="/images/person-icon.svg" alt="User" width={24} height={24} />
-              </div>
-              <div className="bg-white rounded-2xl p-3 text-left max-w-[80%]">
-                <p>Does this subscription cover ads?</p>
-              </div>
-            </div>
-
-            <div className="flex items-start justify-end opacity-0 translate-y-4">
-              <div className="bg-white rounded-2xl p-3 text-left mr-3 max-w-[80%]">
-                <p>Your handler will reach out monthly to see if you want to pay for ads.</p>
-              </div>
-              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
-                <Image src="/images/profile-avatar.png" alt="Support" width={40} height={40} />
-              </div>
-            </div>
-
-            {/* Question 6 */}
-            <div className="flex items-start opacity-0 translate-y-4">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
-                <Image src="/images/person-icon.svg" alt="User" width={24} height={24} />
-              </div>
-              <div className="bg-white rounded-2xl p-3 text-left max-w-[80%]">
-                <p>How often will you post?</p>
-              </div>
-            </div>
-
-            <div className="flex items-start justify-end opacity-0 translate-y-4">
-              <div className="bg-white rounded-2xl p-3 text-left mr-3 max-w-[80%]">
-                <p>The frequency depends on your package. We'll work with you to create a schedule that fits your needs.</p>
               </div>
               <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
                 <Image src="/images/profile-avatar.png" alt="Support" width={40} height={40} />

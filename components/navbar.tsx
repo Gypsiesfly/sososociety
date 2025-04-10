@@ -58,7 +58,7 @@ export default function Navbar() {
       >
         <div className="flex items-center">
           <Image
-            src="/logo.svg"
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-Lu9m1eAj386wCUO2F9EBEMvsh3TzwS.svg"
             alt="Logo"
             width={41}
             height={41}
