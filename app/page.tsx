@@ -67,7 +67,7 @@ export default function Home() {
           </div>
 
           {/* Social Media Icons - Desktop View with Specific Shapes */}
-          <div className="hidden md:flex justify-center gap-8 max-w-5xl mx-auto">
+          <div className="md:flex hidden justify-center gap-8 max-w-5xl mx-auto">
             {/* Twitter/X Icon - Square with rounded corners */}
             <div
               className="social-icon twitter flex items-center justify-center w-40 h-40"
@@ -124,7 +124,7 @@ export default function Home() {
           </div>
 
           {/* Mobile/Tablet View - Overlapping Layout */}
-          <div className="md:hidden w-full h-full relative min-h-[300px]">
+          <div className="flex md:hidden w-full h-full relative min-h-[300px]">
             {/* Twitter/X Icon */}
             <div
               className="social-icon twitter absolute flex items-center justify-center shadow-lg"
