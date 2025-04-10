@@ -100,7 +100,6 @@ export default function MultiStepForm() {
     email: false,
     phone: false,
   })
-  const [paymentFrequency, setPaymentFrequency] = useState<"monthly" | "annual">("monthly")
 
   // Get the flag for the currently selected country code
   const getSelectedFlag = () => {
@@ -112,55 +111,6 @@ export default function MultiStepForm() {
   const hasPremiumPlatforms = () => {
     return formData.platforms.some((platform) => PREMIUM_PLATFORMS.includes(platform))
   }
-
-  // Calculate price based on selections
-  useEffect(() => {
-    // Step 1: Calculate base cost for selected platforms (2 days/week)
-    let baseCostNGN = 0
-    formData.platforms.forEach((platform) => {
-      baseCostNGN += PRICING_DATA.basePricesNGN[platform as keyof typeof PRICING_DATA.basePricesNGN] || 0
-    })
-
-    // Step 2: Add video editing cost if selected
-    let videoEditingCostNGN = 0
-    if (formData.videoEditing && formData.platforms.length > 0) {
-      // If any premium platform is selected, use premium video editing cost
-      if (hasPremiumPlatforms()) {
-        videoEditingCostNGN = PRICING_DATA.videoEditingNGN.premiumPlatforms
-      } else {
-        videoEditingCostNGN = PRICING_DATA.videoEditingNGN.standardPlatforms
-      }
-    }
-
-    // Step 3: Calculate total base cost for 2 days/week
-    const totalBaseCostNGN = baseCostNGN + videoEditingCostNGN
-
-    // Step 4: Calculate cost for additional days (if any)
-    let totalCostWithDaysNGN = totalBaseCostNGN
-    if (formData.postFrequency > 2) {
-      const dailyRateNGN = totalBaseCostNGN / 2
-      totalCostWithDaysNGN = dailyRateNGN * formData.postFrequency
-    }
-
-    // Step 5: Apply client type modifier
-    const clientType = formData.businessType as keyof typeof PRICING_DATA.clientTypeModifiers
-    const modifier = PRICING_DATA.clientTypeModifiers[clientType]
-
-    let finalCostNGN = totalCostWithDaysNGN * modifier.multiplier
-
-    // Apply discount
-    finalCostNGN = finalCostNGN * (1 - modifier.discountPercentage)
-
-    // Step 6: Convert to GBP
-    const finalCostGBP = finalCostNGN * PRICING_DATA.exchangeRateToGBP
-
-    // Update form data with calculated prices
-    setFormData((prev) => ({
-      ...prev,
-      priceNGN: Math.round(finalCostNGN),
-      price: Math.round(finalCostGBP * 100) / 100,
-    }))
-  }, [formData.businessType, formData.platforms, formData.postFrequency, formData.videoEditing])
 
   const validateStep1 = () => {
     const newErrors = {
@@ -178,7 +128,7 @@ export default function MultiStepForm() {
       return
     }
 
-    if (currentStep < 6) {
+    if (currentStep < 5) {
       setCurrentStep(currentStep + 1)
     }
   }
@@ -228,10 +178,6 @@ export default function MultiStepForm() {
     setFormData((prev) => ({ ...prev, countryCode: value }))
   }
 
-  const handlePaymentFrequencyChange = (frequency: "monthly" | "annual") => {
-    setPaymentFrequency(frequency)
-  }
-
   // Format price with commas for thousands
   const formatPrice = (price: number) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -239,21 +185,9 @@ export default function MultiStepForm() {
 
   return (
     <div className="bg-white rounded-3xl shadow-lg p-8 md:p-12 max-w-2xl mx-auto">
-      {/* Price Display - Only visible on steps 1-5 */}
-      {currentStep < 6 && (
-        <div className="flex justify-center items-center mb-6">
-          <div className="bg-[#1A73E9] text-white w-12 h-12 rounded-full flex items-center justify-center mr-3">
-            <span className="font-bold text-xl">£</span>
-          </div>
-          <div className="bg-gray-100 rounded-full px-6 py-2 min-w-[120px] text-center">
-            <span className="text-xl">{formatPrice(formData.price)}</span>
-          </div>
-        </div>
-      )}
-
       {/* Progress Indicator */}
       <div className="flex justify-center gap-2 mb-10">
-        {[1, 2, 3, 4, 5, 6].map((step) => (
+        {[1, 2, 3, 4, 5].map((step) => (
           <div
             key={step}
             className={`w-8 h-2 rounded-full ${
@@ -635,166 +569,26 @@ export default function MultiStepForm() {
         </div>
       )}
 
-      {/* Step 6: Checkout */}
-      {currentStep === 6 && (
-        <div>
-          <h2 className="text-2xl font-semibold text-center mb-8">Total price to subscribe is</h2>
-
-          {/* Payment Frequency Toggle */}
-          <div className="flex justify-center mb-6">
-            <div className="bg-gray-100 p-1 rounded-full flex items-center">
-              <button
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-                  paymentFrequency === "monthly" ? "bg-[#1A73E9] text-white" : "text-gray-700"
-                }`}
-                onClick={() => handlePaymentFrequencyChange("monthly")}
-              >
-                Monthly
-              </button>
-              <button
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-                  paymentFrequency === "annual" ? "bg-[#1A73E9] text-white" : "text-gray-700"
-                }`}
-                onClick={() => handlePaymentFrequencyChange("annual")}
-              >
-                Annual
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-full flex items-center justify-center px-4 py-3 mb-8">
-            <div className="bg-[#1A73E9] text-white w-10 h-10 rounded-full flex items-center justify-center mr-3">
-              <span className="font-bold">£</span>
-            </div>
-            <span className="text-xl font-bold">
-              {formatPrice(paymentFrequency === "annual" ? formData.price * 12 : formData.price)}
-            </span>
-            <span className="ml-2 text-gray-500">{paymentFrequency === "annual" ? "/year" : "/month"}</span>
-          </div>
-
-          <Input
-            type="text"
-            placeholder="Discount code"
-            value={formData.discountCode}
-            onChange={(e) => setFormData((prev) => ({ ...prev, discountCode: e.target.value }))}
-            className="rounded-full px-6 py-5 text-lg mb-8"
-          />
-
-          {/* Order summary */}
-          <div className="bg-gray-50 rounded-xl p-4 mb-8">
-            <h3 className="font-medium text-lg mb-2">Order Summary</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Business type:</span>
-                <span className="font-medium">
-                  {formData.businessType.charAt(0).toUpperCase() + formData.businessType.slice(1)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Platforms:</span>
-                <span className="font-medium">{formData.platforms.length} selected</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Post frequency:</span>
-                <span className="font-medium">{formData.postFrequency} times/week</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Video editing:</span>
-                <span className="font-medium">{formData.videoEditing ? "Yes" : "No"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Payment frequency:</span>
-                <span className="font-medium">{paymentFrequency === "annual" ? "Annual" : "Monthly"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Contact:</span>
-                <span className="font-medium">
-                  {getSelectedFlag()} {formData.countryCode} {formData.phone}
-                </span>
-              </div>
-              <div className="border-t pt-2 mt-2 flex justify-between font-medium">
-                <span>Total:</span>
-                <span>
-                  £{formatPrice(paymentFrequency === "annual" ? formData.price * 12 : formData.price)}
-                  <span className="text-xs text-gray-500 ml-1">
-                    {paymentFrequency === "annual" ? "/year" : "/month"}
-                  </span>
-                </span>
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                <span>
-                  Equivalent to ₦
-                  {formatPrice(paymentFrequency === "annual" ? formData.priceNGN * 12 : formData.priceNGN)} NGN
-                  {paymentFrequency === "annual" ? "/year" : "/month"}
-                </span>
-              </div>
-              {paymentFrequency === "annual" && (
-                <div className="bg-green-50 text-green-700 p-2 rounded-md mt-2 text-xs">
-                  Annual billing helps you save on administrative costs!
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex gap-4">
-            <Button
-              className="flex-1 bg-white hover:bg-gray-100 text-black border border-gray-200 rounded-full py-6"
-              onClick={handleBack}
-            >
-              Go back
-            </Button>
-            <Button
-              className="flex-1 bg-[#1A73E9] hover:bg-blue-600 text-white rounded-full py-6"
-              onClick={async () => {
-                try {
-                  // Convert platforms array to string
-                  const platformsString = formData.platforms.join(",")
-                  
-                  // Create form data object
-                  const formDataToSend = {
-                    ...formData,
-                    price: paymentFrequency === "annual" ? formData.price * 12 : formData.price,
-                    platforms: platformsString,
-                    paymentFrequency,
-                    // Add any other fields you want to send to Lemon Squeezy
-                  }
-
-                  // Send data to your Lemon Squeezy product page
-                  window.location.href = `${process.env.NEXT_PUBLIC_LEMON_SQUEEZY_URL}?data=${encodeURIComponent(JSON.stringify(formDataToSend))}`
-                } catch (error) {
-                  console.error('Error creating checkout session:', error)
-                  alert('Error creating checkout session. Please try again.')
-                }
-              }}
-            >
-              Proceed
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Navigation Buttons - Only show on steps 1-5 */}
-      {currentStep < 6 && (
-        <div className="flex justify-between mt-10">
-          {currentStep > 1 ? (
-            <Button className="bg-[#FF6D38] hover:bg-orange-600 text-white rounded-full px-6" onClick={handleBack}>
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back
-            </Button>
-          ) : (
-            <div></div> // Empty div to maintain layout
-          )}
-
-          <Button className="bg-[#1A73E9] hover:bg-blue-600 text-white rounded-full px-6" onClick={handleNext}>
-            Next
-            <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      {/* Navigation Buttons */}
+      <div className="flex justify-between mt-10">
+        {currentStep > 1 ? (
+          <Button className="bg-[#FF6D38] hover:bg-orange-600 text-white rounded-full px-6" onClick={handleBack}>
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
+            Back
           </Button>
-        </div>
-      )}
+        ) : (
+          <div></div>
+        )}
+
+        <Button className="bg-[#1A73E9] hover:bg-blue-600 text-white rounded-full px-6" onClick={handleNext}>
+          Next
+          <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Button>
+      </div>
     </div>
   )
 }
