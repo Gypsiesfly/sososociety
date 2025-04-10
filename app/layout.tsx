@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: 'sosociety',
   description: 'Social Media Management Platform',
   generator: 'Next.js',
+  icons: {
+    icon: '/images/sslogo.png',
+    apple: '/images/sslogo.png',
+    shortcut: '/images/sslogo.png',
+  },
 }
 
 export default function RootLayout({
