@@ -6,7 +6,7 @@ import Navbar from "@/components/navbar"
 import ClientLogoSlider from "@/components/client-logo-slider"
 import HandlerPopup from "@/components/handler-popup"
 import PricingCard from "@/components/pricing-card"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 
 function SocialTextCycler() {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -33,15 +33,189 @@ function SocialTextCycler() {
   )
 }
 
-export default function Home() {
-  const clientLogos = [
-    { src: "/images/client-logo-1.png", alt: "Her Dreams" },
-    { src: "/images/client-logo-2.png", alt: "Blarbar" },
-    { src: "/images/client-logo-3.png", alt: "CD Logo" },
-    { src: "/images/client-logo-4.png", alt: "WPS Logo" },
-    { src: "/images/client-logo-5.png", alt: "Rstream Logo" },
-  ]
+const faqMessages = [
+  {
+    type: "question",
+    text: "Can I get a refund?",
+    avatar: "/images/person-icon.svg",
+    avatarAlt: "User",
+    avatarSize: 24,
+    align: "left"
+  },
+  {
+    type: "answer",
+    text: "No, there are no refunds for our services",
+    avatar: "/images/profile-avatar.png",
+    avatarAlt: "Support",
+    avatarSize: 40,
+    align: "right"
+  },
+  {
+    type: "question",
+    text: "What if I have a design preference?",
+    avatar: "/images/person-icon.svg",
+    avatarAlt: "User",
+    avatarSize: 24,
+    align: "left"
+  },
+  {
+    type: "answer",
+    text: "Relay it to your handler and he'd follow your instructions",
+    avatar: "/images/profile-avatar.png",
+    avatarAlt: "Support",
+    avatarSize: 40,
+    align: "right"
+  },
+  {
+    type: "question",
+    text: "Will you edit videos for the posts?",
+    avatar: "/images/person-icon.svg",
+    avatarAlt: "User",
+    avatarSize: 24,
+    align: "left"
+  },
+  {
+    type: "answer",
+    text: "If it's part of your package, we will.",
+    avatar: "/images/profile-avatar.png",
+    avatarAlt: "Support",
+    avatarSize: 40,
+    align: "right"
+  },
+  {
+    type: "question",
+    text: "How do I cancel my subscription?",
+    avatar: "/images/person-icon.svg",
+    avatarAlt: "User",
+    avatarSize: 24,
+    align: "left"
+  },
+  {
+    type: "answer",
+    text: "You can decide to not renew it when it ends",
+    avatar: "/images/profile-avatar.png",
+    avatarAlt: "Support",
+    avatarSize: 40,
+    align: "right"
+  }
+]
 
+function FAQChat() {
+  const [visibleCount, setVisibleCount] = useState(0)
+  const [hasBeenVisible, setHasBeenVisible] = useState(false)
+  const [canPlaySound, setCanPlaySound] = useState(false)
+  const [messagesStarted, setMessagesStarted] = useState(false)
+  const chatRef = useRef<HTMLDivElement | null>(null)
+  const soundRef = useRef<HTMLAudioElement | null>(null)
+
+  // Enable sound after first user gesture
+  useEffect(() => {
+    const enableSound = () => setCanPlaySound(true)
+    window.addEventListener("click", enableSound, { once: true })
+    window.addEventListener("keydown", enableSound, { once: true })
+    window.addEventListener("touchstart", enableSound, { once: true })
+    return () => {
+      window.removeEventListener("click", enableSound)
+      window.removeEventListener("keydown", enableSound)
+      window.removeEventListener("touchstart", enableSound)
+    }
+  }, [])
+
+  // Intersection Observer to trigger animation when section is in view
+  useEffect(() => {
+    const section = document.getElementById("faqs")
+    if (!section) return
+    const observer = new window.IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !messagesStarted) {
+          setMessagesStarted(true)
+        }
+        if (!entry.isIntersecting) {
+          setMessagesStarted(false)
+          setVisibleCount(0)
+        }
+      },
+      { threshold: 0.3 }
+    )
+    observer.observe(section)
+    return () => observer.disconnect()
+  }, [messagesStarted])
+
+  // Reveal messages one by one only when user is in section
+  useEffect(() => {
+    if (!messagesStarted) return
+    if (visibleCount >= faqMessages.length) return
+    let delay = 700
+    // After every two messages, insert a 3s gap before next two
+    if (visibleCount > 0 && visibleCount % 2 === 0) {
+      delay = 3000
+    }
+    const timeout = setTimeout(() => {
+      setVisibleCount((c) => c + 1)
+    }, delay)
+    return () => clearTimeout(timeout)
+  }, [visibleCount, messagesStarted])
+
+  // Play sound effect for every new message
+  useEffect(() => {
+    if (!messagesStarted) return
+    if (!canPlaySound) return
+    if (visibleCount === 0) return
+    if (soundRef.current) {
+      soundRef.current.currentTime = 0
+      soundRef.current.play()
+    }
+  }, [visibleCount, messagesStarted, canPlaySound])
+
+  // Scroll to bottom as new messages appear
+  useEffect(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight
+    }
+  }, [visibleCount])
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6 relative z-10">
+      <audio ref={soundRef} src="/ringtone.mp3" preload="auto" />
+      <div
+        ref={chatRef}
+        style={{ maxHeight: 400, overflowY: "auto", transition: "box-shadow 0.3s" }}
+        className="faq-chat-scroll"
+      >
+        {faqMessages.slice(0, visibleCount).map((msg, i) => (
+          <div
+            key={i}
+            className={`flex items-start ${msg.align === "right" ? "justify-end" : ""} mb-2`}
+          >
+            {msg.align === "left" && (
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center overflow-hidden">
+                <Image src={msg.avatar} alt={msg.avatarAlt} width={msg.avatarSize} height={msg.avatarSize} />
+              </div>
+            )}
+            <div className={`bg-white rounded-2xl p-3 text-left max-w-[80%] ${msg.align === "right" ? "mr-3" : ""}`}>
+              <p>{msg.text}</p>
+            </div>
+            {msg.align === "right" && (
+              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
+                <Image src={msg.avatar} alt={msg.avatarAlt} width={msg.avatarSize} height={msg.avatarSize} />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const clientLogos = [
+  { src: "/images/client-logo-1.png", alt: "Her Dreams" },
+  { src: "/images/client-logo-2.png", alt: "Blarbar" },
+  { src: "/images/client-logo-3.png", alt: "CD Logo" },
+  { src: "/images/client-logo-4.png", alt: "WPS Logo" },
+  { src: "/images/client-logo-5.png", alt: "Rstream Logo" },
+]
+
+export default function Home() {
   return (
     <main className="flex min-h-screen flex-col">
       {/* Navbar */}
@@ -235,35 +409,55 @@ export default function Home() {
           </div>
 
           {/* SVG Icons */}
-          <div className="flex flex-wrap justify-center gap-16 md:gap-24 mb-16">
-            {/* Video Editing Icon */}
-            <Image
-              src="/images/video-editing-icon.svg"
-              alt="Video editing"
-              width={240}
-              height={240}
-              className="object-contain"
-            />
-
+          <div className="flex flex-wrap justify-center gap-16 md:gap-24 mb-16" id="what-we-add">
             {/* Graphics Design Icon */}
-            <Image
-              src="/images/graphics-design-icon.svg"
-              alt="Graphics design"
-              width={240}
-              height={240}
-              className="object-contain"
-            />
-
+            <div className="service-float-up transition-all duration-700 opacity-0 translate-y-8" data-index="0">
+              <Image
+                src="/images/graphics-design-icon.svg"
+                alt="Graphics design"
+                width={240}
+                height={240}
+                className="object-contain"
+              />
+            </div>
             {/* Web Design Icon */}
-            <Image
-              src="/images/web-design-icon.svg"
-              alt="Web design"
-              width={240}
-              height={240}
-              className="object-contain"
-            />
+            <div className="service-float-up transition-all duration-700 opacity-0 translate-y-8" data-index="1">
+              <Image
+                src="/images/web-design-icon.svg"
+                alt="Web design & Maintainanace"
+                width={240}
+                height={240}
+                className="object-contain"
+              />
+            </div>
+            {/* Video Editing Icon */}
+            <div className="service-float-up transition-all duration-700 opacity-0 translate-y-8" data-index="2">
+              <Image
+                src="/images/video-editing-icon.svg"
+                alt="Video editing"
+                width={240}
+                height={240}
+                className="object-contain"
+              />
+            </div>
           </div>
-
+          <script dangerouslySetInnerHTML={{__html:`
+          if (typeof window !== 'undefined') {
+            const observer = new IntersectionObserver((entries) => {
+              entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                  document.querySelectorAll('.service-float-up').forEach((el, i) => {
+                    setTimeout(() => {
+                      el.classList.add('opacity-100', 'translate-y-0');
+                    }, i * 120);
+                  });
+                }
+              });
+            }, { threshold: 0.3 });
+            const section = document.getElementById('what-we-add');
+            if (section) observer.observe(section);
+          }
+          `}} />
           {/* Robot Image - Repositioned below SVG images with padding */}
           <div className="flex justify-center pt-12 pb-16">
             <Image
@@ -280,7 +474,7 @@ export default function Home() {
       {/* How it works Section */}
       <section id="how-it-works" className="bg-white h-auto min-h-[700px] py-16 flex items-center">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl sm:text-5xl md:text-[65px] font-bold text-[#00A652] text-center mb-8 md:mb-16">
+          <h2 className="text-4xl font-bold text-[#00A652] text-center mb-8 md:mb-16">
             How it works?
           </h2>
 
@@ -344,83 +538,8 @@ export default function Home() {
             questions
           </h2>
 
-          <div className="max-w-2xl mx-auto space-y-6 relative z-10">
-            {/* Question 1 */}
-            <div className="flex items-start">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
-                <Image src="/images/person-icon.svg" alt="User" width={24} height={24} />
-              </div>
-              <div className="bg-white rounded-2xl p-3 text-left max-w-[80%]">
-                <p>Can i get a refund</p>
-              </div>
-            </div>
-
-            <div className="flex items-start justify-end">
-              <div className="bg-white rounded-2xl p-3 text-left mr-3 max-w-[80%]">
-                <p>No, there are no refunds for our services</p>
-              </div>
-              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
-                <Image src="/images/profile-avatar.png" alt="Support" width={40} height={40} />
-              </div>
-            </div>
-
-            {/* Question 2 */}
-            <div className="flex items-start">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
-                <Image src="/images/person-icon.svg" alt="User" width={24} height={24} />
-              </div>
-              <div className="bg-white rounded-2xl p-3 text-left max-w-[80%]">
-                <p>What if i have a design preference</p>
-              </div>
-            </div>
-
-            <div className="flex items-start justify-end">
-              <div className="bg-white rounded-2xl p-3 text-left mr-3 max-w-[80%]">
-                <p>Relay it to your handler and he'd follow your instructions</p>
-              </div>
-              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
-                <Image src="/images/profile-avatar.png" alt="Support" width={40} height={40} />
-              </div>
-            </div>
-
-            {/* Question 3 */}
-            <div className="flex items-start">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
-                <Image src="/images/person-icon.svg" alt="User" width={24} height={24} />
-              </div>
-              <div className="bg-white rounded-2xl p-3 text-left max-w-[80%]">
-                <p>Will you edit videos for the posts</p>
-              </div>
-            </div>
-
-            <div className="flex items-start justify-end">
-              <div className="bg-white rounded-2xl p-3 text-left mr-3 max-w-[80%]">
-                <p>If its part of your package, we will.</p>
-              </div>
-              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
-                <Image src="/images/profile-avatar.png" alt="Support" width={40} height={40} />
-              </div>
-            </div>
-
-            {/* Question 4 */}
-            <div className="flex items-start">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex-shrink-0 mr-3 flex items-center justify-center">
-                <Image src="/images/person-icon.svg" alt="User" width={24} height={24} />
-              </div>
-              <div className="bg-white rounded-2xl p-3 text-left max-w-[80%]">
-                <p>How I cancel my subscription?</p>
-              </div>
-            </div>
-
-            <div className="flex items-start justify-end">
-              <div className="bg-white rounded-2xl p-3 text-left mr-3 max-w-[80%]">
-                <p>You can decide to not renew it when it ends</p>
-              </div>
-              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
-                <Image src="/images/profile-avatar.png" alt="Support" width={40} height={40} />
-              </div>
-            </div>
-          </div>
+          {/* --- Real-time FAQ Chat --- */}
+          <FAQChat />
         </div>
       </section>
 
