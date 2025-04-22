@@ -764,7 +764,8 @@ export default function MultiStepForm() {
             </Button>
             <Button
               className="flex-1 bg-[#011B33] hover:bg-blue-600 text-white rounded-full py-6 flex items-center justify-center gap-2"
-              onClick={async () => {
+              onClick={async (e) => {
+                e.preventDefault();
                 try {
                   const platformsString = formData.platforms.join(",")
                   const metadata = {
@@ -786,25 +787,52 @@ export default function MultiStepForm() {
                       }
                     ]
                   }
-                  // Call backend to initialize transaction
-                  const res = await fetch("/api/paystack/initialize", {
+
+                  // Debug payload
+                  console.log("Initializing payment with payload:", {
+                    email: formData.email,
+                    amount: formData.priceNGN * 100,
+                    metadata
+                  })
+
+                  // Disable button while processing
+                  const button = e.currentTarget;
+                  button.disabled = true;
+                  button.innerHTML = "Processing...";
+
+                  const res = await fetch("/api/checkout", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      email: formData.email,
-                      amount: formData.priceNGN * 100, // amount in kobo for Paystack
+                    body: JSON.stringify({ 
+                      email: formData.email, 
+                      amount: formData.priceNGN * 100, 
                       metadata
                     })
                   })
-                  const data = await res.json()
-                  if (!res.ok) throw new Error(data.error || "Unable to initialize payment")
-                  // Redirect to Paystack payment page
-                  if (data.authorization_url) {
-                    window.location.href = data.authorization_url;
-                  } else {
-                    throw new Error('No authorization_url returned from Paystack');
+
+                  if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || "Payment initialization failed");
                   }
+
+                  const data = await res.json();
+                  console.log("Payment init response:", data);
+
+                  const redirectUrl = data.url || data.authorization_url;
+                  if (!redirectUrl) {
+                    throw new Error("No payment URL returned from server");
+                  }
+
+                  // Immediately redirect to Paystack
+                  window.location.href = redirectUrl;
                 } catch (error: any) {
+                  console.error("Payment error:", error);
+                  alert("Payment error: " + error.message);
+                } finally {
+                  // Re-enable button
+                  const button = e.currentTarget;
+                  button.disabled = false;
+                  button.innerHTML = "Pay with";
                 }
               }}
             >

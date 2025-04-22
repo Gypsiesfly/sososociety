@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios, { AxiosResponse } from 'axios';
 import crypto from 'crypto';
+import { MongoClient } from 'mongodb';
 
 interface PaystackTransaction {
   customer: {
@@ -9,6 +10,9 @@ interface PaystackTransaction {
   amount: number;
   currency: string;
   reference: string;
+  status: string;
+  message: string;
+  metadata: any;
 }
 
 interface PaystackWebhookEvent {
@@ -31,11 +35,51 @@ const sendReceiptEmail = async (reference: string, metadata: any) => {
     );
 
     const { data } = response.data;
-    const { customer, amount, currency, reference: txReference } = data;
+    const { customer, amount, currency, reference: txReference, status, message, metadata: txMetadata } = data;
 
-    console.log('Sending receipt to:', customer.email);
+    console.log('Transaction verified:', {
+      reference: txReference,
+      status,
+      message,
+      amount,
+      currency,
+      customer: customer.email
+    });
+
+    // Store transaction in MongoDB
+    const client = new MongoClient(process.env.MONGODB_URI || '');
+    try {
+      await client.connect();
+      const db = client.db('your-database-name');
+      const transactions = db.collection('transactions');
+      
+      await transactions.insertOne({
+        reference: txReference,
+        status,
+        amount,
+        currency,
+        customer: customer.email,
+        metadata: txMetadata,
+        createdAt: new Date()
+      });
+
+      // Update order status if needed
+      if (txMetadata.order_id) {
+        const orders = db.collection('orders');
+        await orders.updateOne(
+          { _id: txMetadata.order_id },
+          { $set: { status: 'paid', paid_at: new Date() } }
+        );
+      }
+    } finally {
+      await client.close();
+    }
+
+    // Send receipt email here if needed
+    // ... email sending logic ...
+
   } catch (error) {
-    console.error('Error sending receipt:', error);
+    console.error('Error processing transaction:', error);
     throw error;
   }
 };
@@ -47,12 +91,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
   if (!PAYSTACK_SECRET_KEY) {
+    console.error('Paystack secret key not configured');
     return res.status(500).json({ message: 'Paystack secret key not configured' });
   }
 
   try {
     const signature = req.headers['x-paystack-signature'];
     if (!signature) {
+      console.error('Missing signature header');
       return res.status(401).json({ message: 'Missing signature header' });
     }
     
@@ -62,6 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .digest('hex');
     
     if (hash !== signature) {
+      console.error('Invalid signature');
       return res.status(401).json({ message: 'Invalid signature' });
     }
 
@@ -71,6 +118,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { reference, metadata } = event.data;
       await sendReceiptEmail(reference, metadata);
     }
+
+    // Log all events
+    console.log('Received Paystack webhook:', {
+      event: event.event,
+      reference: event.data.reference,
+      metadata: event.data.metadata
+    });
 
     res.status(200).json({ message: 'Webhook processed successfully' });
   } catch (error) {

@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     const paystackBody = {
       email,
-      amount: Number(amount) * 100, // Convert to kobo
+      amount: Number(amount), // Already in kobo from frontend
       ...rest
     }
 
