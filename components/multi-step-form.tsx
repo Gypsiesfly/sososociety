@@ -151,6 +151,11 @@ export default function MultiStepForm() {
     // Apply discount
     finalCostNGN = finalCostNGN * (1 - modifier.discountPercentage)
 
+    // Apply annual multiplier if needed
+    if (paymentFrequency === "annual") {
+      finalCostNGN = finalCostNGN * 12
+    }
+
     // Step 6: Convert to GBP
     const finalCostGBP = finalCostNGN * PRICING_DATA.exchangeRateToGBP
 
@@ -160,7 +165,7 @@ export default function MultiStepForm() {
       priceNGN: Math.round(finalCostNGN),
       price: Math.round(finalCostGBP * 100) / 100,
     }))
-  }, [formData.businessType, formData.platforms, formData.postFrequency, formData.videoEditing])
+  }, [formData.businessType, formData.platforms, formData.postFrequency, formData.videoEditing, paymentFrequency])
 
   const validateStep1 = () => {
     const newErrors = {
@@ -173,19 +178,29 @@ export default function MultiStepForm() {
     return !Object.values(newErrors).some((error) => error)
   }
 
+  const validateStep3 = () => {
+    return formData.platforms.length > 0;
+  }
+
   const handleNext = () => {
     if (currentStep === 1 && !validateStep1()) {
-      return
+      return;
     }
-
+    if (currentStep === 3 && !validateStep3()) {
+      alert('Please select at least one social medium before continuing.');
+      return;
+    }
     if (currentStep < 6) {
-      setCurrentStep(currentStep + 1)
+      setCurrentStep(currentStep + 1);
     }
   }
 
   const handleBack = () => {
+    if (currentStep === 6) {
+      setPaymentFrequency("monthly");
+    }
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
+      setCurrentStep(currentStep - 1);
     }
   }
 
@@ -667,7 +682,7 @@ export default function MultiStepForm() {
               <span className="font-bold">£</span>
             </div>
             <span className="text-xl font-bold">
-              {formatPrice(paymentFrequency === "annual" ? formData.price * 12 : formData.price)}
+              {formatPrice(formData.price)}
             </span>
             <span className="ml-2 text-gray-500">{paymentFrequency === "annual" ? "/year" : "/month"}</span>
           </div>
@@ -692,7 +707,11 @@ export default function MultiStepForm() {
               </div>
               <div className="flex justify-between">
                 <span>Platforms:</span>
-                <span className="font-medium">{formData.platforms.length} selected</span>
+                <span className="font-medium">
+                  {formData.platforms.length > 0
+                    ? formData.platforms.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")
+                    : "None selected"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Post frequency:</span>
@@ -715,7 +734,7 @@ export default function MultiStepForm() {
               <div className="border-t pt-2 mt-2 flex justify-between font-medium">
                 <span>Total:</span>
                 <span>
-                  £{formatPrice(paymentFrequency === "annual" ? formData.price * 12 : formData.price)}
+                  £{formatPrice(formData.price)}
                   <span className="text-xs text-gray-500 ml-1">
                     {paymentFrequency === "annual" ? "/year" : "/month"}
                   </span>
@@ -724,7 +743,7 @@ export default function MultiStepForm() {
               <div className="text-xs text-gray-500 mt-1">
                 <span>
                   Equivalent to ₦
-                  {formatPrice(paymentFrequency === "annual" ? formData.priceNGN * 12 : formData.priceNGN)} NGN
+                  {formatPrice(formData.priceNGN)} NGN
                   {paymentFrequency === "annual" ? "/year" : "/month"}
                 </span>
               </div>
@@ -744,30 +763,53 @@ export default function MultiStepForm() {
               Go back
             </Button>
             <Button
-              className="flex-1 bg-[#1A73E9] hover:bg-blue-600 text-white rounded-full py-6"
+              className="flex-1 bg-[#011B33] hover:bg-blue-600 text-white rounded-full py-6 flex items-center justify-center gap-2"
               onClick={async () => {
                 try {
-                  // Convert platforms array to string
                   const platformsString = formData.platforms.join(",")
-                  
-                  // Create form data object
-                  const formDataToSend = {
-                    ...formData,
-                    price: paymentFrequency === "annual" ? formData.price * 12 : formData.price,
-                    platforms: platformsString,
-                    paymentFrequency,
-                    // Add any other fields you want to send to Lemon Squeezy
+                  const metadata = {
+                    custom_fields: [
+                      {
+                        display_name: "Business Email",
+                        variable_name: "business_email",
+                        value: "YOUR_EMAIL@YOURDOMAIN.COM"
+                      },
+                      {
+                        display_name: "Client Name",
+                        variable_name: "client_name",
+                        value: formData.fullName
+                      },
+                      {
+                        display_name: "Phone Number",
+                        variable_name: "phone_number",
+                        value: `${formData.countryCode} ${formData.phone}`
+                      }
+                    ]
                   }
-
-                  // Send data to your Lemon Squeezy product page
-                  window.location.href = `${process.env.NEXT_PUBLIC_LEMON_SQUEEZY_URL}?data=${encodeURIComponent(JSON.stringify(formDataToSend))}`
-                } catch (error) {
-                  console.error('Error creating checkout session:', error)
-                  alert('Error creating checkout session. Please try again.')
+                  // Call backend to initialize transaction
+                  const res = await fetch("/api/paystack/initialize", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      email: formData.email,
+                      amount: formData.priceNGN * 100, // amount in kobo for Paystack
+                      metadata
+                    })
+                  })
+                  const data = await res.json()
+                  if (!res.ok) throw new Error(data.error || "Unable to initialize payment")
+                  // Redirect to Paystack payment page
+                  if (data.authorization_url) {
+                    window.location.href = data.authorization_url;
+                  } else {
+                    throw new Error('No authorization_url returned from Paystack');
+                  }
+                } catch (error: any) {
                 }
               }}
             >
-              Proceed
+              Pay with
+              <img src="/paystack_logo.svg.svg" alt="Paystack" style={{height:36, width:90}} />
             </Button>
           </div>
         </div>
