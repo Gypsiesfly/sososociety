@@ -9,16 +9,23 @@ export async function POST(request: Request) {
     if (!paystackSecretKey) {
       return NextResponse.json({ error: "Missing Paystack secret key" }, { status: 500 })
     }
+   
+    const  callbackUrl = !!process.env.NEXT_PUBLIC_SITE_URL 
+        ? `${process.env.NEXT_PUBLIC_SITE_URL}/payment-success`
+        : 'http://localhost:3000/payment-success';
 
     // Construct payload for Paystack
-    const { email, amount, ...rest } = body
+    const { email, amount,  
+      ...rest
+     } = body
     if (!email || !amount) {
       return NextResponse.json({ error: "Missing required fields: email or amount" }, { status: 400 })
     }
 
     const paystackBody = {
       email,
-      amount: Number(amount), // Already in kobo from frontend
+      amount: Number(amount),
+      callbackUrl, // Already in kobo from frontend
       ...rest
     }
 

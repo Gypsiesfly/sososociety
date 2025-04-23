@@ -1,12 +1,12 @@
 "use client"
 
-import type React from "react"
+import { Building2, Check, Facebook, Home, Info, Instagram, Store, Twitter, Youtube } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useEffect, useState } from "react"
 
-import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Building2, Home, Store, Info, Instagram, Facebook, Twitter, Youtube, Check } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type React from "react"
 
 // Country codes with emoji flags
 const countryCodes = [
@@ -767,18 +767,28 @@ export default function MultiStepForm() {
               onClick={async (e) => {
                 e.preventDefault();
                 try {
-                  const platformsString = formData.platforms.join(",")
+                  // postFrequency,videoEditing,paymentFrequency,amount,currency
                   const metadata = {
                     custom_fields: [
-                      {
-                        display_name: "Business Email",
-                        variable_name: "business_email",
-                        value: "YOUR_EMAIL@YOURDOMAIN.COM"
+                    {
+                        display_name: "Platforms",
+                        variable_name: "platforms",
+                        value: formData.platforms
                       },
                       {
-                        display_name: "Client Name",
-                        variable_name: "client_name",
-                        value: formData.fullName
+                        display_name: "Post Frequency",
+                        variable_name: "post_frequency",
+                        value: formData.postFrequency
+                      },
+                      {
+                        display_name: "Video Editing",
+                        variable_name: "video_editing",
+                        value: formData.videoEditing
+                      },
+                      {
+                        display_name: "Payment Frequency",
+                        variable_name: "payment_frequency",
+                        value: paymentFrequency,
                       },
                       {
                         display_name: "Phone Number",

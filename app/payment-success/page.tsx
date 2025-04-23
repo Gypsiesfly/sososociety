@@ -1,10 +1,16 @@
+"use client"
+
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+
 import { Button } from "@/components/ui/button";
+import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation'
 
 export default function PaymentSuccess() {
   const router = useRouter();
-  const { trxref } = router.query;
+   const searchParams = useSearchParams()
+  const trxref = searchParams.get('trxref')
+
   const [loading, setLoading] = useState(true);
   const [verified, setVerified] = useState<null | boolean>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,29 +33,30 @@ export default function PaymentSuccess() {
         body: JSON.stringify({ reference })
       });
       const data = await res.json();
-      if (data.success) {
+      console.log(data.data)
+      if (data.data.status==="success") {
         setVerified(true);
         // Send order summary email (replace with real data as needed)
-        fetch('/api/send-order-summary', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderSummary: 'Order details here', // TODO: Replace with actual order summary
-            customerEmail: 'customer@example.com', // TODO: Replace with actual customer email
-            customerPhone: '1234567890' // TODO: Replace with actual customer phone
-          })
-        })
-        .then(async (res) => {
-          const data = await res.json();
-          if (!res.ok) {
-            console.error('Order summary email failed:', data);
-          } else {
-            console.log('Order summary email sent:', data);
-          }
-        })
-        .catch((err) => {
-          console.error('Order summary email request error:', err);
-        });
+        // fetch('/api/send-order-summary', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({
+        //     orderSummary: 'Order details here', // TODO: Replace with actual order summary
+        //     customerEmail: 'customer@example.com', // TODO: Replace with actual customer email
+        //     customerPhone: '1234567890' // TODO: Replace with actual customer phone
+        //   })
+        // })
+        // .then(async (res) => {
+        //   const data = await res.json();
+        //   if (!res.ok) {
+        //     console.error('Order summary email failed:', data);
+        //   } else {
+        //     console.log('Order summary email sent:', data);
+        //   }
+        // })
+        // .catch((err) => {
+        //   console.error('Order summary email request error:', err);
+        // });
         // Redirect to homepage after verification
         router.replace('/');
       } else {
