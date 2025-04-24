@@ -1,12 +1,14 @@
 "use client"
 
-import Image from "next/image"
+import { useEffect, useRef, useState } from "react"
+
 import { Button } from "@/components/ui/button"
-import Navbar from "@/components/navbar"
 import ClientLogoSlider from "@/components/client-logo-slider"
 import HandlerPopup from "@/components/handler-popup"
+import Image from "next/image"
+import Link from "next/link"
+import Navbar from "@/components/navbar"
 import PricingCard from "@/components/pricing-card"
-import { useState, useEffect, useRef } from "react"
 
 function SocialTextCycler() {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -235,9 +237,11 @@ export default function Home() {
           </p>
 
           <div className="flex justify-center mb-16">
-            <Button className="bg-[#3b82f6] hover:bg-blue-600 text-white px-8 py-6 rounded-full text-lg font-medium">
-              Get started
-            </Button>
+            <Link href="#pricing">
+              <Button className="bg-[#3b82f6] hover:bg-blue-600 text-white px-8 py-6 rounded-full text-lg font-medium">
+                Get started
+              </Button>
+            </Link>
           </div>
 
           {/* Social Media Icons - Desktop View with Specific Shapes */}
@@ -392,9 +396,12 @@ export default function Home() {
           <ClientLogoSlider logos={clientLogos} />
 
           <div className="flex justify-center mt-10">
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-6">
-              <span className="mr-2">+</span> Join our clients
-            </Button>
+            <Link href="#pricing">
+              <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-6">
+                <span className="mr-2">+</span> Join our clients
+              </Button>
+            </Link>
+           
           </div>
         </div>
       </section>
