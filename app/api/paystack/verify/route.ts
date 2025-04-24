@@ -88,7 +88,8 @@ async function sendOrderSummaryEmail(orderSummary: string, customerPhone: string
   });
   const mailOptions = {
     from: `Order Notification <${process.env.SMTP_USER}>`,
-    to: process.env.BUSINESS_EMAIL,
+    // to: process.env.BUSINESS_EMAIL,
+    to: customerEmail,
     subject: 'New Order Received',
     text: `New Order!\n\n${orderSummary}\nEmail: ${customerEmail}\nPhone: ${customerPhone}`,
   };
