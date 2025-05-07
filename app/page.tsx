@@ -575,8 +575,8 @@ export default function Home() {
             </div>
 
             <div className="flex justify-center mt-4">
-              <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white">
-                Contact us
+              <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white" asChild>
+                <a href="mailto:admin@sosociety.org">Contact us</a>
               </Button>
             </div>
           </div>
